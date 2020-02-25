@@ -1,0 +1,21 @@
+<mapper namespace="com.sx.dao.IUserDao">
+    <select id="findAll" resultType="com.sx.pojo.User">
+        select * from user_t
+    </select>
+
+    <select id="findById" paramterType="com.sx.pojo.User" resultType="com.sx.pojo.User">
+        select * from user_t where id=#{id} and user_name=#{user_name}
+    </select>
+
+    <insert id="addUser" paramterType="com.sx.pojo.User">
+        insert into user_t(id, user_name, password, age) values(#{id},#{user_name},#{password}, #{age})
+    </insert>
+
+    <update id="updateUser" paramterType="com.sx.pojo.User">
+        update user_t set user_name=#{user_name},password=#{password},age=#{age} where id=#{id}
+    </update>
+
+    <delete id="deleteUserById" paramterType="com.sx.pojo.User">
+        delete from user_t where id=#{id}
+    </delete>
+</mapper>

@@ -1,0 +1,34 @@
+Mybatis作业
+1、Mybatis动态sql是做什么的？都有哪些动态sql？简述一下动态sql的执行原理？
+通过XML标签配置的方式，完成一些逻辑判断和动态拼接sql的功能。
+支持if、choose(when,otherwise)、where、set、trim、foreach等。
+XMLMapperBuilder会使用XMLStatementBuilder.parseStatementNode方法去解析select、insert、update、delete标签，XMLStatementBuilder对象内部会使用XMLScriptBuilder.parseScriptNode()方法去构造sqlSource（分为动态和静态sqlSource），
+parseScriptNode方法中使用parseDynamicTags方法解析各个标签和文本并构造出MixedSqlNode，对于动态节点使用对应的NodeHandler解析并封装成对应的sqlNode（如IfSqlNode），静态节点（文本）封装成StaticTextSqlNode，最后封装到MixedSqlNode的list集合中，
+在executor.query()方法中会调用sqlSource.getBoundSql()方法，该方法会动态的构造sql语句，首先调用MixedSqlNode的apply方法，内部循环调用sqlNodelist中sqlnode的apply方法（内部使用OGNL表达式判断逻辑），最后构造出sql并封装到BoundSql（内部sql语句为？占位符，还有参数信息）对象中。
+
+2、Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？
+支持，关联查询中resultMap的association一对一和collection一对多、多对多支持延迟加载，通过配置lazyLoadingEnable=true实现。
+resultMap中实现关联查询有两种方法，一种是嵌套结果，sql语句中直接关联，第二种是嵌套sql，sql语句分开，association通过select字段的statementid和colume关联字段去查询需要关联的对象。
+通过动态代理实现，返回的javabean为代理对象，当调用关联对象的get方法，如果返回值为null，则会触发关联的sql查询。
+
+3、Mybatis都有哪些Executor执行器？它们之间的区别是什么？
+SimpleExecutor：每次执行sql，都会生成一个statement对象，用完后关闭statement对象。
+ReuseExector：每次执行sql，先通过sql为key到Map缓存中查询是否有statement对象，有则直接复用，没有则创建，用完放到Map中。复用statement。
+BatchExector：执行update操作时，将所有sql addBatch到批处理中，等待统一执行。
+BaseExecutor：以上三个的父类，模版类，需要实现doUpdate、doQuery、doQueryCursor等方法。
+
+4、简述下Mybatis的一级、二级缓存（分别从存储结构、范围、失效场景。三个方面来作答）？
+存储结构：一级缓存基于PerpetualCache的HashMap本地缓存；二级缓存默认也采用PerpetualCache的HashMap，可替换为分布式缓存如redis，二级缓存对象需要实现序列化。
+范围：一级缓存范围是sqlSession级别，自动开启；二级缓存范围为Mapper namespace级别，需要手动开启。
+失效场景：一级缓存，同一个sqlSession中，如果有更新操作，则查询缓存失效；二级缓存，同一个mapper中，如果存在更新操作，则缓存失效。
+二级缓存对于多表操作不适用，可能会产生脏数据。
+
+5、简述Mybatis的插件运行原理，以及如何编写一个插件？
+原理：
+责任链模式+动态代理
+作用范围为Executor、StatementHandler、ParameterHandler、ResultHandler四个类的方法。
+对于以上四个类，动态代理返回代理对象，通过责任链模式IterceptroChain将多个插件添加进来。
+编写：
+1、插件实现Interceptor接口，并实现iterceptor、plugin、setProperties方法
+插件类添加@Intercepts注解，在@Signature注解配置需要拦截的类、方法和对应方法参数，可配置多个Signature
+2、在全局配置文件sqlMapConfig.XML中 plugins标签中配置插件信息

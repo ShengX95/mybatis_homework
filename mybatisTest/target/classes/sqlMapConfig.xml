@@ -1,0 +1,9 @@
+<Config>
+    <DataSource>
+        <Property name="diver" value="com.mysql.jdbc.Driver"></Property>
+        <Property name="jdbcUrl" value="jdbc:mysql://106.12.76.148:3306/test?characterEncoding=utf8"></Property>
+        <Property name="username" value="root"></Property>
+        <Property name="password" value="wjdh84928399"></Property>
+    </DataSource>
+    <Mapper resource="mapper.xml"></Mapper>
+</Config>
